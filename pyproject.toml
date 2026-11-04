@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "decisioneeg"
+version = "1.0.0"
+description = "DecisionEEG-1: calibrated decisions from any EEG recording, on the NOMAD-EEG-Large foundation model"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.9"
+authors = [{ name = "Abdulkader Helwan" }]
+dependencies = [
+    "nomad-eeg @ git+https://github.com/AbdulkaderHelwan/NOMAD-EEG.git",
+    "torch>=2.1", "numpy", "scipy", "scikit-learn", "mne>=1.4", "matplotlib",
+]
+
+[project.optional-dependencies]
+web = ["gradio>=4.44,<6"]
+claude = ["anthropic>=1.0"]
+
+[project.urls]
+Repository = "https://github.com/AbdulkaderHelwan/DecisionEEG-1"
+Backbone = "https://github.com/AbdulkaderHelwan/NOMAD-EEG"
+
+[tool.setuptools.packages.find]
+include = ["decisioneeg*"]
+
+[tool.setuptools.package-data]
+"decisioneeg.chat" = ["report_template.html"]

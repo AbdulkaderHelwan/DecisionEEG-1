@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>__TITLE__</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a reading column (46rem) like an EEG report, widening to 64rem for timeline figures;
+   the conversation uses tool-call chips that open to the raw output. Same design as the
+   "Ask your EEG" walkthrough page. */
+:root {
+  --bg: #f3f6f7; --panel: #ffffff; --ink: #13212a; --muted: #5a6b75; --rule: #d5dee2;
+  --accent: #0d7480; --seiz: #c03568; --flag: #b77300; --code-bg: #e9eff1;
+  --c0: #0d7480; --c1: #b77300; --c2: #7a4fb5; --c3: #2f8a3e; --c4: #c03568; --c5: #9aa7ae;
+  --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --step--1: 0.8125rem; --step-0: 1rem; --step-1: 1.1875rem; --step-2: 1.5rem; --step-4: 3rem;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e1519; --panel: #151f25; --ink: #e2eaee; --muted: #93a5af; --rule: #2a3a43;
+  --accent: #4cc2cc; --seiz: #ef6f9d; --flag: #f0b545; --code-bg: #1b282f;
+  --c0: #4cc2cc; --c1: #f0b545; --c2: #b696ea; --c3: #6cc47a; --c4: #ef6f9d; --c5: #6f8089; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0e1519; --panel: #151f25; --ink: #e2eaee; --muted: #93a5af; --rule: #2a3a43;
+  --accent: #4cc2cc; --seiz: #ef6f9d; --flag: #f0b545; --code-bg: #1b282f;
+  --c0: #4cc2cc; --c1: #f0b545; --c2: #b696ea; --c3: #6cc47a; --c4: #ef6f9d; --c5: #6f8089; color-scheme: dark }
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--bg); color: var(--ink); font: 400 var(--step-0)/1.6 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 2.5rem 4rem }
+main { display: grid; gap: 3rem }
+.col { max-width: 46rem; width: 100%; margin-inline: auto; display: grid; gap: 1rem; min-width: 0 }
+.wide { max-width: 64rem; width: 100%; margin-inline: auto; display: grid; gap: 1rem; min-width: 0 }
+h1, h2, h3 { font-family: var(--font-display); font-stretch: 85%; text-wrap: balance; margin: 0; line-height: 1.1 }
+h1 { font-size: var(--step-4); font-weight: 800; overflow-wrap: anywhere }
+h2 { font-size: var(--step-2); font-weight: 700 }
+h3 { font-size: var(--step-1); font-weight: 600 }
+p { margin: 0 }
+.eyebrow { font: 600 var(--step--1)/1 var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent) }
+.muted { color: var(--muted) }
+.meta { display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; font: 400 var(--step--1)/1.4 var(--font-mono); color: var(--muted) }
+.meta b { color: var(--ink); font-weight: 500 }
+code, pre { font-family: var(--font-mono); font-size: 0.86em }
+pre { background: var(--code-bg); border-radius: 6px; padding: 0.85rem 1rem; overflow-x: auto; margin: 0; line-height: 1.5 }
+.warn { border-left: 3px solid var(--flag); padding: 0.15rem 0 0.15rem 0.9rem; font-size: var(--step--1) }
+.pill { display: inline-block; font: 500 0.72rem/1 var(--font-body); padding: 0.2rem 0.45rem; border-radius: 999px; border: 1px solid currentColor; vertical-align: 0.2em }
+.pill.ready { color: var(--accent) } .pill.experimental { color: var(--flag) }
+summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+
+/* whole-recording answers */
+.answers { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0.75rem }
+.answer { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 0.9rem 1rem; display: grid; gap: 0.5rem; align-content: start }
+.answer .q { font-size: var(--step--1); color: var(--muted) }
+.answer .d { font: 700 var(--step-2)/1 var(--font-display); font-stretch: 85% }
+.meter { height: 8px; border-radius: 4px; background: var(--rule); overflow: hidden }
+.meter span { display: block; height: 100%; background: var(--accent) }
+.answer .issue { font-size: 0.78rem; color: var(--flag); line-height: 1.4 }
+
+/* figures */
+.figure { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 1rem 1rem 0.75rem; display: grid; gap: 0.75rem; min-width: 0 }
+.figure svg { width: 100%; height: auto; display: block }
+.figure svg text { fill: var(--muted); font: 11px var(--font-mono) }
+.figure img { max-width: 100%; height: auto; border-radius: 4px; background: #fff }
+.legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; font-size: var(--step--1); color: var(--muted) }
+.legend span::before { content: ""; display: inline-block; width: 0.9em; height: 0.9em; border-radius: 2px; margin-right: 0.4em; vertical-align: -0.12em; background: var(--c) }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0.75rem 1.25rem }
+.stats div { display: grid; gap: 0.1rem }
+.stats b { font: 700 var(--step-2)/1.1 var(--font-display); font-variant-numeric: tabular-nums }
+.stats span { font-size: var(--step--1); color: var(--muted); line-height: 1.35 }
+.tscroll { overflow-x: auto }
+table.t { width: 100%; border-collapse: collapse; font-size: var(--step--1); font-variant-numeric: tabular-nums }
+table.t th { text-align: left; font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--ink); padding: 0.4rem 0.75rem 0.4rem 0 }
+table.t td { border-bottom: 1px solid var(--rule); padding: 0.4rem 0.75rem 0.4rem 0; vertical-align: top }
+.bad { color: var(--seiz); font-weight: 600 }
+
+/* conversation */
+.turn { display: grid; gap: 0.7rem; padding-block: 1.25rem; border-top: 1px solid var(--rule) }
+.turn:first-child { border-top: 0; padding-top: 0 }
+.uq { font-weight: 600; font-size: var(--step-1); display: flex; gap: 0.6rem; align-items: baseline }
+.uq::before { content: "You"; font: 600 var(--step--1)/1 var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); flex: none; width: 3.4rem }
+.calls { display: grid; gap: 0.35rem; padding-left: 4rem }
+details.call { background: var(--code-bg); border-radius: 6px; min-width: 0 }
+details.call summary { cursor: pointer; padding: 0.35rem 0.7rem; font: 400 var(--step--1)/1.4 var(--font-mono); list-style: none; display: flex; gap: 0.5rem; flex-wrap: wrap }
+details.call summary::-webkit-details-marker { display: none }
+details.call summary::before { content: "▸"; color: var(--accent) }
+details.call[open] summary::before { content: "▾" }
+details.call .name { color: var(--accent); font-weight: 500 }
+details.call .err { color: var(--seiz) }
+details.call pre { background: transparent; padding-top: 0; font-size: 0.78rem; max-height: 18rem; overflow: auto; white-space: pre-wrap; word-break: break-word }
+details.call img { display: block; margin: 0 0.7rem 0.7rem; max-width: calc(100% - 1.4rem); border-radius: 4px; background: #fff }
+.ua { display: flex; gap: 0.6rem; align-items: baseline }
+.ua::before { content: "EEG"; font: 600 var(--step--1)/1 var(--font-display); letter-spacing: 0.06em; color: var(--accent); flex: none; width: 3.4rem }
+.ua > div { min-width: 0; display: grid; gap: 0.6rem }
+.ua p, .ua li { overflow-wrap: anywhere }
+.ua ul, .ua ol { margin: 0; padding-left: 1.2rem }
+.ua table { border-collapse: collapse; font-size: var(--step--1) }
+.ua td, .ua th { border-bottom: 1px solid var(--rule); padding: 0.25rem 0.6rem 0.25rem 0; text-align: left }
+.secs { font: 400 var(--step--1)/1 var(--font-mono); color: var(--muted); padding-left: 4rem }
+@media (max-width: 560px) { .calls, .secs { padding-left: 0 } .uq, .ua { flex-direction: column; gap: 0.2rem } .uq::before, .ua::before { width: auto } }
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script id="data" type="application/json">__DATA__</script>
+<script>
+(function () {
+  const D = JSON.parse(document.getElementById("data").textContent);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const fmt = (s) => { const m = Math.floor(s / 60), r = Math.round(s % 60); return `${m}:${String(r).padStart(2, "0")}`; };
+  const pct = (x) => `${(100 * x).toFixed(x >= 0.995 || x < 0.005 ? 1 : 0)}%`;
+  const R = D.recording, dur = R.duration_s;
+  const html = [];
+
+  // ---------------------------------------------------------------- header
+  html.push(`<header class="col"><div class="eyebrow">DecisionEEG-1 · ${esc(D.backbone)}</div><h1>${esc(R.file)}</h1>
+    <div class="meta"><span>duration <b>${fmt(dur)}</b></span><span>channels used <b>${R.channels_used.length} of ${R.channels_given}</b></span>
+    <span>sampling rate <b>${R.sampling_rate_hz} Hz</b></span>${D.truth ? `<span>annotations <b>${esc(D.truth.file)}</b></span>` : ""}</div>
+    ${R.warnings.map((w) => `<p class="warn">${esc(w)}</p>`).join("")}
+    <p class="muted">Every number on this page comes from DecisionEEG-1's calibrated outputs or plain signal measurements, the same tools the chat answers from. Research use only; not a medical device.</p></header>`);
+
+  // ---------------------------------------------------------- whole recording
+  if (D.recording_answers.length) html.push(`<section class="col"><h2>Whole recording</h2><div class="answers">${D.recording_answers.map((a) => a.abstain
+    ? `<div class="answer"><div class="q">${esc(a.question)}</div><div class="muted">abstained: ${esc(a.abstain)}</div></div>`
+    : `<div class="answer"><div class="q">${esc(a.question)} <span class="pill ${a.tier}">${a.tier}</span></div><div class="d">${esc(a.decision)}</div>
+       <div class="meter"><span style="width:${(100 * a.p_pos).toFixed(1)}%"></span></div><div class="muted" style="font-size:var(--step--1)">P(${esc(a.pos)}) = ${pct(a.p_pos)}</div>
+       ${a.known_issue ? `<div class="issue">${esc(a.known_issue)}</div>` : ""}</div>`).join("")}</div></section>`);
+
+  // ---------------------------------------------------------- shared axis
+  const X0 = 52, X1 = 990, sx = (t) => X0 + (t / dur) * (X1 - X0);
+  const axis = (y) => { let s = ""; const step = dur > 3600 ? 30 : dur > 900 ? 5 : 1;
+    for (let m = 0; m <= dur / 60 + 1e-9; m += step) s += `<line x1="${sx(m * 60)}" x2="${sx(m * 60)}" y1="${y}" y2="${y + 5}" stroke="var(--muted)"/><text x="${sx(m * 60)}" y="${y + 18}" text-anchor="middle">${m} min</text>`;
+    return s; };
+  const bands = (y0, y1) => (D.truth ? D.truth.events : []).map((e) =>
+    `<rect x="${sx(e.start_s)}" y="${y0}" width="${Math.max(1, sx(e.end_s) - sx(e.start_s))}" height="${y1 - y0}" fill="var(--seiz)" fill-opacity="0.2"/>`).join("");
+  const W = D.windows;
+
+  // ---------------------------------------------------------- seizure
+  if (W.seizure && !W.seizure.abstain) {
+    const S = W.seizure, k = S.options.indexOf("yes"), yT = 12, yB = 160, tY = 172, sy = (p) => yB - p * (yB - yT);
+    let svg = bands(yT, tY + 12);
+    for (const p of [0, 0.5, 1]) svg += `<line x1="${X0}" x2="${X1}" y1="${sy(p)}" y2="${sy(p)}" stroke="var(--rule)"/><text x="${X0 - 6}" y="${sy(p) + 4}" text-anchor="end">${p}</text>`;
+    let d = ""; S.start_s.forEach((s, i) => { d += `${i ? "L" : "M"}${sx(s).toFixed(1)},${sy(S.p[i][k]).toFixed(1)}L${sx(Math.min(dur, s + S.window_s)).toFixed(1)},${sy(S.p[i][k]).toFixed(1)}`; });
+    svg += `<path d="${d}" fill="none" stroke="var(--accent)" stroke-width="1.4" stroke-linejoin="round"/>`;
+    S.start_s.forEach((s, i) => { if (S.decision[i] === k && !S.artefact[i]) svg += `<rect x="${sx(s)}" y="${tY}" width="${Math.max(1, sx(s + S.window_s) - sx(s) - 0.4)}" height="10" fill="var(--flag)"/>`; });
+    svg += `<text x="${X0 - 6}" y="${tY + 9}" text-anchor="end">flag</text>` + axis(tY + 14);
+    const y = S.per_option.yes, T = D.truth;
+    const stats = T ? [[`${T.seizures_detected} of ${T.events.length}`, "annotated seizures with at least one flagged window"],
+                       [pct(T.window_sensitivity), `of the ${T.windows_in_seizure} seizure windows flagged`],
+                       [pct(T.window_specificity), `of the other ${T.windows_total - T.windows_in_seizure} windows left unflagged`],
+                       [`${T.flagged_outside_seizure}`, `flagged windows outside annotated seizures`]]
+                    : [[`${y.windows}`, `of ${S.start_s.length} windows flagged as seizure`], [`${(y.seconds / 60).toFixed(1)} min`, "flagged in total"],
+                       [`${D.seizure_segments.length}`, "segments (gaps up to 5 s merged)"],
+                       [y.highest_probability_windows && y.highest_probability_windows.length ? pct(y.highest_probability_windows[0].p) : "–", "highest calibrated probability"]];
+    html.push(`<section class="wide"><div class="col" style="max-width:none"><h2>${esc(S.question)} <span class="pill ${S.tier}">${S.tier}</span></h2>
+      <p class="muted">Calibrated probability for each ${S.window_s} s window, and the windows the class-balanced decision flags.${T ? " Expert-annotated seizures are shaded; the chat never sees them." : ""}</p></div>
+      <div class="figure"><svg viewBox="0 0 1000 210" role="img" aria-label="Seizure probability per window">${svg}</svg>
+      <div class="legend"><span style="--c:var(--accent)">calibrated P(seizure)</span><span style="--c:var(--flag)">decision: seizure</span>${T ? `<span style="--c:color-mix(in srgb, var(--seiz) 30%, transparent)">annotated seizure</span>` : ""}</div>
+      <div class="stats">${stats.map(([b, s]) => `<div><b>${b}</b><span>${s}</span></div>`).join("")}</div></div>
+      ${S.known_issue ? `<p class="warn">${esc(S.known_issue)}</p>` : ""}
+      ${D.seizure_segments.length ? `<div class="tscroll"><table class="t"><tr><th>Segment</th><th>Start</th><th>End</th><th>Duration</th><th>Peak p</th><th>Mean p</th>${T ? "<th>Annotated?</th>" : ""}</tr>
+        ${D.seizure_segments.map((g, i) => `<tr><td>${i + 1}</td><td>${fmt(g.start_s)}</td><td>${fmt(g.end_s)}</td><td>${g.duration_s.toFixed(0)} s</td><td>${g.peak_p.toFixed(3)}</td><td>${g.mean_p.toFixed(3)}</td>${T ? `<td>${g.annotated ? "yes" : '<span class="bad">no</span>'}</td>` : ""}</tr>`).join("")}</table></div>` : ""}
+      ${D.seizure_snippet ? `<div class="figure"><h3>EEG around the strongest detection (${fmt(D.seizure_snippet.top_s)}, p = ${D.seizure_snippet.p.toFixed(3)})</h3><img src="${D.seizure_snippet.png}" alt="EEG traces around the strongest seizure detection"><p class="muted">Shaded: windows decided as seizure. Vertical bar: 100 µV.</p></div>` : ""}
+    </section>`);
+  }
+
+  // ---------------------------------------------------------- class strips (events) and hypnogram (sleep)
+  const classColor = (i) => `var(--c${i % 6})`;
+  for (const [id, Q] of Object.entries(W)) {
+    if (id === "seizure") continue;
+    if (Q.abstain) { html.push(`<section class="col"><h2>${esc(Q.question)}</h2><p class="muted">Abstained: ${esc(Q.abstain)}</p></section>`); continue; }
+    let svg = "", h;
+    if (id === "sleep_stage") {
+      const order = ["W", "REM", "N1", "N2", "N3"], lv = (o) => order.indexOf(o), yT = 14, gap = 30;
+      h = yT + gap * 4 + 40;
+      order.forEach((o, i) => { svg += `<line x1="${X0}" x2="${X1}" y1="${yT + i * gap}" y2="${yT + i * gap}" stroke="var(--rule)"/><text x="${X0 - 6}" y="${yT + i * gap + 4}" text-anchor="end">${o}</text>`; });
+      let d = ""; Q.start_s.forEach((s, i) => { const y = yT + lv(Q.options[Q.decision[i]]) * gap; d += `${i ? "L" : "M"}${sx(s).toFixed(1)},${y}L${sx(Math.min(dur, s + Q.window_s)).toFixed(1)},${y}`; });
+      svg += `<path d="${d}" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
+      Q.start_s.forEach((s, i) => { if (Q.artefact[i]) svg += `<rect x="${sx(s)}" y="${yT - 6}" width="${Math.max(1, sx(s + Q.window_s) - sx(s))}" height="${gap * 4 + 12}" fill="var(--muted)" fill-opacity="0.15"/>`; });
+      svg += axis(yT + gap * 4 + 12);
+    } else {
+      const neg = Q.options.indexOf(Q.negative), yT = 10, rh = 16;
+      h = yT + rh * Q.options.length + 40;
+      Q.options.forEach((o, j) => { svg += `<text x="${X0 - 6}" y="${yT + j * rh + 12}" text-anchor="end">${esc(o.length > 9 ? o.slice(0, 8) + "…" : o)}</text><line x1="${X0}" x2="${X1}" y1="${yT + j * rh + rh}" y2="${yT + j * rh + rh}" stroke="var(--rule)"/>`; });
+      Q.start_s.forEach((s, i) => { const j = Q.decision[i]; if (j === neg || Q.artefact[i]) return;
+        svg += `<rect x="${sx(s)}" y="${yT + j * rh + 2}" width="${Math.max(1, sx(s + Q.window_s) - sx(s) - 0.3)}" height="${rh - 4}" fill="${classColor(j)}" fill-opacity="${(0.35 + 0.65 * Q.p[i][j]).toFixed(2)}"/>`; });
+      svg += bands(yT, yT + rh * Q.options.length) + axis(yT + rh * Q.options.length + 4);
+    }
+    const per = Object.entries(Q.per_option).filter(([, v]) => v.windows);
+    html.push(`<section class="wide"><div class="col" style="max-width:none"><h2>${esc(Q.question)} <span class="pill ${Q.tier}">${Q.tier}</span></h2>
+      <p class="muted">${id === "sleep_stage" ? `The decided stage of every ${Q.window_s} s epoch (a hypnogram).` : `Windows decided as each option${Q.negative ? ` other than "${esc(Q.negative)}"` : ""}; darker means a higher calibrated probability.`}</p></div>
+      <div class="figure"><svg viewBox="0 0 1000 ${h}" role="img" aria-label="${esc(Q.question)}">${svg}</svg>
+      <div class="stats">${per.map(([o, v]) => `<div><b>${(v.seconds / 60).toFixed(1)} min</b><span>${esc(o)} (${pct(v.share)})</span></div>`).join("")}</div></div>
+      ${Q.known_issue ? `<p class="warn">${esc(Q.known_issue)}</p>` : ""}</section>`);
+  }
+
+  // ---------------------------------------------------------- cue-locked
+  for (const L of D.locked) html.push(`<section class="col"><h2>${esc(L.question)} <span class="pill ${L.tier}">${L.tier}</span></h2>` + (L.abstain
+    ? `<p class="muted">Abstained: ${esc(L.abstain)}</p>`
+    : `<p class="muted">One window at every onset of each annotation label. The model cannot tell whether these onsets are the stimuli or cues the question assumes.</p>
+       <div class="tscroll"><table class="t"><tr><th>Label</th><th>Epochs</th><th>Decisions</th></tr>${L.labels.map((r) => `<tr><td>${esc(r.label)}</td><td>${r.epochs}</td><td>${Object.entries(r.decisions).map(([o, n]) => `${esc(o)} ${n}`).join(", ")}</td></tr>`).join("")}</table></div>`) + `</section>`);
+
+  // ---------------------------------------------------------- signal
+  if (D.signal) {
+    const S = D.signal, bandsN = ["delta", "theta", "alpha", "beta", "gamma"];
+    html.push(`<section class="col"><h2>Signal measurements</h2><p class="muted">Plain signal processing over the whole recording, not model decisions.</p>
+      <div class="stats">${S.posterior_peak_hz_6_14 != null ? `<div><b>${S.posterior_peak_hz_6_14} Hz</b><span>posterior peak frequency (6–14 Hz)</span></div>` : ""}
+      ${S.mains_50 != null ? `<div><b>${pct(S.mains_50)}</b><span>power near 50 Hz</span></div>` : ""}${S.mains_60 != null ? `<div><b>${pct(S.mains_60)}</b><span>power near 60 Hz</span></div>` : ""}
+      <div><b>${pct(S.clip)}</b><span>samples beyond the model's clip limit</span></div></div>
+      <div class="tscroll"><table class="t"><tr><th>Channel</th><th>RMS µV</th><th>Peak Hz</th>${bandsN.map((b) => `<th>${b}</th>`).join("")}</tr>
+      ${Object.entries(S.per_channel).map(([n, c]) => `<tr><td>${esc(n)}</td><td>${c.rms_uV}</td><td>${c.peak_hz_1_30}</td>${bandsN.map((b) => `<td>${pct(c.relative_power[b])}</td>`).join("")}</tr>`).join("")}</table></div></section>`);
+  }
+
+  // ---------------------------------------------------------- conversation
+  const inline = (s) => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/(^|[^*])\*([^*\s][^*]*)\*/g, "$1<em>$2</em>");
+  function md(text) {
+    const lines = String(text).replace(/<think>[\s\S]*?<\/think>/g, "").trim().split("\n");
+    let out = "", list = null, para = [], table = [];
+    const fP = () => { if (para.length) { out += `<p>${inline(para.join(" "))}</p>`; para = []; } };
+    const fL = () => { if (list) { out += `<${list.t}>${list.items.map((i) => `<li>${inline(i)}</li>`).join("")}</${list.t}>`; list = null; } };
+    const fT = () => { if (table.length) { const rows = table.filter((r) => !/^\|?\s*:?-{2,}/.test(r)).map((r) => r.replace(/^\||\|$/g, "").split("|").map((c) => c.trim()));
+      out += `<div class="tscroll"><table>${rows.map((r, i) => `<tr>${r.map((c) => i ? `<td>${inline(c)}</td>` : `<th>${inline(c)}</th>`).join("")}</tr>`).join("")}</table></div>`; table = []; } };
+    for (const raw of lines) { const l = raw.trim();
+      if (/^\|.*\|$/.test(l)) { fP(); fL(); table.push(l); continue; } else fT();
+      const hh = l.match(/^#{1,4}\s+(.*)/), b = l.match(/^[-*•]\s+(.*)/), n = l.match(/^\d+[.)]\s+(.*)/);
+      if (!l || /^-{3,}$/.test(l)) { fP(); fL(); }
+      else if (hh) { fP(); fL(); out += `<p><strong>${inline(hh[1])}</strong></p>`; }
+      else if (b || n) { fP(); const t = b ? "ul" : "ol"; if (!list || list.t !== t) { fL(); list = { t, items: [] }; } list.items.push((b || n)[1]); }
+      else { fL(); para.push(l); } }
+    fP(); fL(); fT(); return out;
+  }
+  const pretty = (s) => { try { return JSON.stringify(JSON.parse(s), null, 1); } catch (e) { return s; } };
+  html.push(`<section class="col"><h2>Conversation</h2>` + (D.chat && D.chat.turns.length
+    ? `<p class="muted">${D.chat.turns.length} question${D.chat.turns.length > 1 ? "s" : ""} with ${esc(D.chat.model)}. Open a tool call to see exactly what the chat model was given. Refresh the page after each answer.</p><div>` +
+      D.chat.turns.map((t) => `<div class="turn"><div class="uq">${esc(t.question)}</div>` +
+        (t.tool_calls.length ? `<div class="calls">${t.tool_calls.map((c) => `<details class="call"><summary><span class="name">${esc(c.tool)}</span><span>${esc(JSON.stringify(c.input))}</span>${c.error ? '<span class="err">error</span>' : ""}</summary><pre>${esc(pretty(c.output))}</pre>${c.png ? `<img src="${c.png}" alt="${esc(c.tool)} plot">` : ""}</details>`).join("")}</div>` : `<div class="secs">no tool call</div>`) +
+        `<div class="ua"><div>${md(t.answer)}</div></div><div class="secs">${t.seconds} s</div></div>`).join("") + `</div>`
+    : `<p class="muted">No questions yet. Start the chat (<code>python -m decisioneeg.chat.cli --analysis …</code>); this page is rewritten after every answer, so refresh it to see the conversation here.</p>`) + `</section>`);
+
+  // ---------------------------------------------------------- trust
+  html.push(`<section class="col"><h2>How far to trust it</h2><p>Each question was tested on held-out patients from its training datasets.</p>
+    <div class="tscroll"><table class="t"><tr><th>Question</th><th>Tier</th><th>Test set</th><th>Windows</th><th>Result</th><th>ECE</th></tr>
+    ${D.tests.map((r) => `<tr><td>${esc(r.question)}</td><td><span class="pill ${r.tier}">${r.tier}</span></td><td>${esc(r.source)}${r.external ? " (never trained on)" : ""}</td><td>${r.n.toLocaleString()}</td><td class="${r.bad ? "bad" : ""}">${esc(r.metric)} ${r.value.toFixed(3)}</td><td>${r.ece == null ? "–" : r.ece.toFixed(3)}</td></tr>`).join("")}</table></div>
+    <p class="muted">AUROC: 0.5 is chance, 1.0 is perfect. ECE is the calibration error of the stated probabilities (lower is better).</p>
+    ${Object.entries(D.known_issues).map(([q, s]) => `<p class="warn"><b>${esc(q)}:</b> ${esc(s)}</p>`).join("")}</section>`);
+
+  document.getElementById("app").innerHTML = html.join("");
+})();
+</script>
+</body>
+</html>
