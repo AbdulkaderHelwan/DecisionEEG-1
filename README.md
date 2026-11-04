@@ -4,7 +4,7 @@
 
 DecisionEEG-1 answers a fixed set of clinical and research questions about an EEG recording, with a
 calibrated probability for every answer. It runs on the frozen
-[NOMAD-EEG-Large](https://github.com/AbdulkaderHelwan/NOMAD-EEG) foundation model (67.6 M parameters),
+[NOMAD-EEG-Large](https://github.com/AbdulkaderHelwan/DecisionEEG-1/releases/download/v1.0/backbone_large_ema.pt) foundation model (67.6 M parameters, see [Backbone](#backbone)),
 so it reads any electrode montage with standard 10-20 names, at any sampling rate. When the input is
 unusable it abstains and says why, instead of guessing.
 
@@ -44,22 +44,35 @@ marked in the file.
 Held-out test splits (patients not used for training); Bonn was never trained on. AUROC for two
 options, balanced accuracy otherwise; ECE is the calibration error of the stated probabilities.
 Full table with 95% bootstrap intervals, robustness and speed: [docs/MODEL_CARD.md](docs/MODEL_CARD.md).
+† The backbone's unlabelled pre-training included recordings from this corpus (no labels were used).
 
 | Question | Test set | Windows | Result | ECE |
 |---|---|---|---|---|
-| Seizure | TUSZ | 50,000 | AUROC 0.872 | 0.008 |
+| Seizure | TUSZ† | 50,000 | AUROC 0.872 | 0.008 |
 | Seizure | Siena | 18,729 | AUROC 0.860 | 0.004 |
 | Seizure | Bonn (external, single channel) | 100 | AUROC 0.275 | 0.829 |
-| EEG event | TUEV | 29,421 | balanced accuracy 0.546 | 0.034 |
-| Abnormal | TUAB | 50,000 | AUROC 0.853 | 0.039 |
-| Sleep stage | Sleep-EDF | 9,137 | balanced accuracy 0.720 | 0.066 |
+| EEG event | TUEV† | 29,421 | balanced accuracy 0.546 | 0.034 |
+| Abnormal | TUAB† | 50,000 | AUROC 0.853 | 0.039 |
+| Sleep stage | Sleep-EDF† | 9,137 | balanced accuracy 0.720 | 0.066 |
 | P300 | BCIAUT | 33,600 | AUROC 0.649 | 0.007 |
-| Epilepsy | TUEP | 1,800 (30 patients) | AUROC 0.605 (0.644 per patient) | 0.083 |
+| Epilepsy | TUEP† | 1,800 (30 patients) | AUROC 0.605 (0.644 per patient) | 0.083 |
 | Depression | Mumtaz | 1,179 (10 people) | AUROC 0.936 (0.960 per person) | 0.157 |
 | Motor imagery | EEGMMIDB | 1,803 | balanced accuracy 0.372 | 0.025 |
 
 Speed: one hour of 19-electrode EEG, all questions, takes 58 s on one A100 GPU slice and about an
 hour on 6 CPU threads.
+
+## Backbone
+
+NOMAD-EEG-Large is a scaled-up [NOMAD-EEG](https://github.com/AbdulkaderHelwan/NOMAD-EEG): the same
+architecture, with 67.6 M instead of 12.0 M parameters (512 channels and 24 blocks instead of 256 and 16),
+pre-trained by diffusion on unlabelled EEG from seven corpora (TUSZ, TUAB, TUEV, TUEP, CHB-MIT, SEED-V and
+Sleep-EDF) instead of TUEV alone. Its weights are released here with DecisionEEG-1:
+[`backbone_large_ema.pt`](https://github.com/AbdulkaderHelwan/DecisionEEG-1/releases/download/v1.0/backbone_large_ema.pt) (270 MB, EMA weights at pre-training step 16,000). It is not yet described
+in a paper.
+
+The question heads were fitted on the features of exactly this checkpoint. Use them with this file
+only; a different NOMAD-EEG checkpoint needs re-fitted heads.
 
 ## How it is built
 

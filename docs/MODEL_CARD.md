@@ -1,26 +1,27 @@
 # DecisionEEG-1 model card
 
-Calibrated answers to a fixed set of EEG questions, from any electrode montage, on the frozen NOMAD-EEG-Large backbone (67.6 M parameters, large_stepc16000.pt) with one linear head per question. Research use only; not a medical device.
+Calibrated answers to a fixed set of EEG questions, from any electrode montage, on the frozen NOMAD-EEG-Large backbone (67.6 M parameters, pre-training step 16,000; released as backbone_large_ema.pt) with one linear head per question. Research use only; not a medical device.
 
 Input transform: microvolts, 200 Hz, per-window median removed, divided by 22.59 uV (median over channels of the per-channel IQR of TUEV (NOMAD-EEG-Large pool, uV)), clipped at +-20.
 
 ## Questions and test results
 
 Per-subject rows (mean probability per person) are given for the two per-person questions only.
+† The backbone's unlabelled pre-training included recordings from this corpus (no labels were used).
 
 Primary metric: AUROC (2 options) or balanced accuracy. Decisions are class-balanced; probabilities are calibrated on validation (temperature + class bias). ECE: expected calibration error (lower is better). Paper: NOMAD-EEG BASE frozen probe in the paper (different backbone and protocol: per-dataset scaling, one dataset per head).
 
 | Question | Tier | Test set | n | Primary [95% CI] | Bal. acc. | Macro F1 | ECE before → after | Paper |
 |---|---|---|---|---|---|---|---|---|
-| Is there a seizure in this window? | ready | tusz | 50,000 | 0.872 [0.865, 0.878] | 0.782 | 0.557 | 0.109 → 0.008 | auroc 0.866 |
+| Is there a seizure in this window? | ready | tusz† | 50,000 | 0.872 [0.865, 0.878] | 0.782 | 0.557 | 0.109 → 0.008 | auroc 0.866 |
 | Is there a seizure in this window? | ready | siena | 18,729 | 0.860 [0.820, 0.898] | 0.654 | 0.607 | 0.007 → 0.004 | auroc 0.882 |
 | Is there a seizure in this window? | ready | bonn (external) | 100 | 0.275 [0.158, 0.385] | 0.425 | 0.145 | 0.828 → 0.829 | auroc 0.999 |
-| Which EEG event is in the middle second of this window? | ready | tuev | 29,421 | 0.546 [0.533, 0.558] | 0.546 | 0.456 | 0.068 → 0.034 | balanced_accuracy 0.542 |
-| Is this EEG abnormal? | ready | tuab5s | 50,000 | 0.853 [0.849, 0.856] | 0.777 | 0.778 | 0.041 → 0.039 | auroc 0.838 |
-| Which sleep stage is this 30 s epoch? | ready | sleepedf | 9,137 | 0.720 [0.710, 0.730] | 0.720 | 0.706 | 0.055 → 0.066 | balanced_accuracy 0.757 |
+| Which EEG event is in the middle second of this window? | ready | tuev† | 29,421 | 0.546 [0.533, 0.558] | 0.546 | 0.456 | 0.068 → 0.034 | balanced_accuracy 0.542 |
+| Is this EEG abnormal? | ready | tuab5s† | 50,000 | 0.853 [0.849, 0.856] | 0.777 | 0.778 | 0.041 → 0.039 | auroc 0.838 |
+| Which sleep stage is this 30 s epoch? | ready | sleepedf† | 9,137 | 0.720 [0.710, 0.730] | 0.720 | 0.706 | 0.055 → 0.066 | balanced_accuracy 0.757 |
 | Does this epoch contain a P300 response to the attended stimulus? | ready | bciaut | 33,600 | 0.649 [0.640, 0.658] | 0.606 | 0.535 | 0.035 → 0.007 | auroc 0.718 |
-| Does this person have epilepsy? | experimental | tuep | 1,800 | 0.605 [0.580, 0.632] | 0.583 | 0.582 | 0.080 → 0.083 | auroc_patient 0.679 |
-| ↳ per subject | | tuep | 30 subjects | 0.644 | 0.600 | 0.600 | 0.052 | |
+| Does this person have epilepsy? | experimental | tuep† | 1,800 | 0.605 [0.580, 0.632] | 0.583 | 0.582 | 0.080 → 0.083 | auroc_patient 0.679 |
+| ↳ per subject | | tuep† | 30 subjects | 0.644 | 0.600 | 0.600 | 0.052 | |
 | Does this person have major depressive disorder? | experimental | mumtaz | 1,179 | 0.936 [0.923, 0.949] | 0.835 | 0.835 | 0.165 → 0.157 | auroc 0.942 |
 | ↳ per subject | | mumtaz | 10 subjects | 0.960 | 0.800 | 0.800 | 0.156 | |
 | Which movement is being imagined? | experimental | eegmmidb | 1,803 | 0.372 [0.351, 0.395] | 0.372 | 0.372 | 0.125 → 0.025 | balanced_accuracy 0.442 |
